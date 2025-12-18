@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erol Tilki | Eğitim Yönetim Sistemi V28</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --bg-color: #ecf0f1;
+            --header-grad: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --ags-green: #27ae60;
+            --oabt-orange: #d35400;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* --- LOGIN --- */
+        #auth-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #2c3e50 0%, #000000 100%); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .auth-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 350px; text-align: center; }
+        .auth-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn-auth { width: 100%; padding: 12px; background: #2c3e50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .auth-toggle { margin-top: 15px; font-size: 12px; color: #666; cursor: pointer; text-decoration: underline; }
+
+        /* --- HEADER --- */
+        header { background: var(--header-grad); color: white; padding: 10px 25px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-img { width: 45px; height: 45px; background: white; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; border: 3px solid #f1c40f; box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+        .user-nav { display: flex; align-items: center; gap: 15px; }
+        .notification-btn { position: relative; cursor: pointer; font-size: 22px; margin-right: 10px; }
+        .notif-badge { position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; font-size: 10px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .btn-logout { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 12px; }
+
+        /* --- TABS --- */
+        .tabs-nav { padding: 10px 25px 0 25px; display: flex; gap: 5px; flex-shrink: 0; flex-wrap: wrap; }
+        .tab-btn { background: #bdc3c7; border: none; padding: 10px 20px; border-radius: 8px 8px 0 0; font-family: inherit; font-weight: 600; color: #555; cursor: pointer; transition: 0.3s; font-size: 11px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 -2px 10px rgba(0,0,0,0.05); transform: translateY(2px); z-index: 10; }
+        #tab-btn-admin { background: #e67e22; color: white; display: none; }
+        #tab-btn-admin.active { background: #d35400; }
+        .tab-btn-alert { color: #c0392b !important; } .tab-btn-alert.active { color: #e74c3c !important; border-top-color: #e74c3c; }
+
+        /* --- CONTENT --- */
+        #main-app { display: none; flex-direction: column; height: 100%; }
+        .tab-content { display: none; flex-grow: 1; background: white; margin: 0 25px 15px 25px; border-radius: 0 8px 8px 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow: hidden; flex-direction: column; position: relative; z-index: 5; }
+        .tab-content.active { display: flex; }
+
+        /* --- PROGRAM TABLES --- */
+        .table-scroll { overflow: auto; flex-grow: 1; padding-bottom: 60px; }
+        table.prog-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1300px; }
+        .prog-table th { position: sticky; top: 0; background: #34495e; color: white; padding: 10px; font-size: 11px; z-index: 30; border-bottom: 2px solid #2c3e50; }
+        .prog-table td { border-bottom: 1px solid #f1f2f6; border-right: 1px solid #f1f2f6; padding: 6px; text-align: center; vertical-align: middle; }
+        .prog-table td:first-child { position: sticky; left: 0; background: white; z-index: 20; border-right: 2px solid #bdc3c7; font-weight: 600; min-width: 280px; text-align: left; padding-left: 15px; font-size: 12px; color: #2c3e50; }
+        .subject-header td { color: black; font-weight: 800; text-transform: uppercase; padding: 10px 15px; position: sticky; left: 0; z-index: 25; text-align: left; font-size: 13px; }
+
+        .day-box { display: flex; flex-direction: column; gap: 2px; min-width: 55px; }
+        .input-row { display: flex; align-items: center; background: #f8f9fa; border-radius: 4px; border: 1px solid #ecf0f1; }
+        .lbl { font-size: 8px; width: 15px; text-align: center; font-weight: bold; color: white; padding: 3px 0; border-radius: 3px 0 0 3px; }
+        .lbl-h { background: #3498db; } .lbl-c { background: #27ae60; } .lbl-d { background: #9b59b6; }
+        .inp { width: 100%; border: none; background: transparent; text-align: center; font-size: 10px; font-weight: 700; padding: 2px 0; outline: none; }
+        .note-area { width: 95%; min-width: 200px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; height: 45px; resize: vertical; padding: 5px; font-family: inherit; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; color: white; display: inline-block; min-width: 45px; }
+        .alert-blink { background-color: #fce4e4 !important; border: 1px solid #e74c3c !important; animation: redPulse 1s infinite alternate; }
+        @keyframes redPulse { from { box-shadow: 0 0 5px #e74c3c; } to { box-shadow: 0 0 15px #e74c3c; } }
+        .fab-save { position: absolute; bottom: 20px; right: 20px; background: #27ae60; color: white; border: none; padding: 10px 25px; border-radius: 30px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 50; }
+
+        /* --- TRIALS TAB (SABİT) --- */
+        .trials-container { padding: 20px; overflow-y: auto; height: 100%; }
+        .general-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+        .trial-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; flex: 1; min-width: 350px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; flex-direction: column; }
+        .branch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .branch-card { background: white; border: 1px solid #eee; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .branch-card h4 { margin: 0 0 10px 0; font-size: 13px; border-bottom: 2px solid #ddd; padding-bottom: 5px; font-weight: 700; color:#333; }
+        
+        .fixed-trial-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .fixed-trial-table th { background: #f1f2f6; padding: 8px 4px; font-size: 11px; color: #555; border-bottom: 1px solid #ddd; text-align: center; }
+        .fixed-trial-table td { border: 1px solid #eee; padding: 0; height: 35px; vertical-align: middle; }
+        .fixed-trial-table input { width: 100%; height: 100%; border: none; text-align: center; font-weight: bold; font-size: 12px; background: transparent; display: block; box-sizing: border-box; }
+        .fixed-trial-table input:focus { background-color: #fff8e1; outline: 1px solid #3498db; }
+        
+        .add-row-btn { align-self: flex-start; background: #3498db; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 10px; }
+        .trial-save-header { position: absolute; top: 20px; right: 30px; z-index: 99; }
+        .btn-save-manual { background: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .chart-wrapper { height: 350px; margin-top: 30px; background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+
+        /* --- ADMIN PANEL (YENİLENMİŞ) --- */
+        .user-table { width: 100%; border-collapse: collapse; background: white; }
+        .user-table th { background: #34495e; color: white; padding: 10px; text-align: left; }
+        .user-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        
+        #admin-user-detail { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top:20px; }
+        
+        /* Grafik Alanı (Sıkılaştırma) */
+        .admin-charts-area { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; 
+            background: #f9f9f9; padding: 10px; border-radius: 5px;
+        }
+        .admin-chart-box { height: 200px; width: 100%; position: relative; } /* Sabit yükseklik */
+
+        /* Admin Tablo Görüntüleyici (Düzenli) */
+        .admin-view-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; table-layout: fixed;}
+        .admin-view-table th { background: #2c3e50; color: white; padding: 8px; text-align: left; }
+        .admin-view-table td { border-bottom: 1px solid #eee; padding: 8px; word-wrap: break-word; }
+        .admin-view-table tr:nth-child(even) { background: #fdfdfd; }
+        .admin-view-table tr:hover { background: #f1f2f6; }
+
+        .btn-style { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-inspect { background: #3498db; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-action { background: #2c3e50; color: white; margin-top: 10px; width: 100%; justify-content: center; padding: 10px; }
+
+        /* --- ANALYSIS --- */
+        .analysis-wrapper { padding: 20px; overflow-y: auto; height: 100%; background: #fdfdfd; }
+        .warning-card { background: #fff; border-left: 5px solid #e74c3c; padding: 15px; margin-bottom: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
+        .success-rate-low { color: #e74c3c; font-weight: bold; }
+        .no-warning-box { text-align: center; padding: 40px; color: #27ae60; font-size: 16px; background: #fff; border-radius: 10px; border: 2px dashed #27ae60; }
+
+        /* --- ARCHIVE --- */
+        .archive-container { padding: 15px; overflow-y: auto; height: 100%; }
+        .archive-card { background: white; border: 1px solid #e0e0e0; border-radius: 6px; margin-bottom: 10px; }
+        .archive-header { background: #f8f9fa; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .archive-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .archive-table th { background: #7f8c8d; color: white; font-size: 10px; padding: 5px; text-align: left;}
+        .archive-table td { border-bottom: 1px solid #eee; padding: 5px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .archive-table td:last-child { white-space: normal; }
+        .btn-delete-single { background: none; border: none; color: #e74c3c; font-size: 14px; cursor: pointer; padding: 0 10px; border-left: 1px solid #ccc; }
+
+        #assignment-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:200; justify-content:center; align-items:center; }
+        .modal-content { background: white; padding: 25px; border-radius: 10px; width: 450px; max-height: 80vh; overflow-y: auto; }
+        .task-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; transition: 0.3s; }
+        .task-completed { background-color: #f0fff4; }
+        .task-completed .task-text { text-decoration: line-through; color: #aaa; }
+        .task-checkbox { margin-right: 10px; width: 18px; height: 18px; cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+<div id="auth-screen">
+    <div class="auth-card">
+        <h2 class="auth-logo"><i class="fas fa-chalkboard-teacher"></i></h2>
+        <h3 class="auth-title">EROL TİLKİ</h3>
+        <p style="color:#777; margin-bottom:10px;">Eğitim & Sınav Koçluğu</p>
+        <div id="login-form">
+            <input type="text" id="login-user" class="auth-input" placeholder="Kullanıcı Adı">
+            <input type="password" id="login-pass" class="auth-input" placeholder="Şifre">
+            <button class="btn-auth" onclick="login()">GİRİŞ YAP</button>
+            <div class="auth-toggle" onclick="toggleAuth('register')">Hesabın yok mu? Kayıt Ol</div>
+        </div>
+        <div id="register-form" style="display:none;">
+            <input type="text" id="reg-user" class="auth-input" placeholder="Kullanıcı Adı Belirle">
+            <input type="password" id="reg-pass" class="auth-input" placeholder="Şifre Belirle">
+            <button class="btn-auth" onclick="register()">KAYIT OL</button>
+            <div class="auth-toggle" onclick="toggleAuth('login')">Giriş Yap</div>
+        </div>
+    </div>
+</div>
+
+<div id="main-app">
+    <header>
+        <div class="logo-area">
+            <div class="logo-img"><i class="fas fa-graduation-cap"></i></div>
+            <div class="brand-text"><h1>Erol Tilki <small style="display:block;font-size:10px;font-weight:normal">EĞİTİM KOÇLUĞU</small></h1></div>
+        </div>
+        <div class="user-nav">
+            <div class="notification-btn" onclick="showAssignments()">
+                <i class="fas fa-bell"></i><span class="notif-badge" id="notif-count" style="display:none">0</span>
+            </div>
+            <span class="user-info" id="display-username">User</span>
+            <button class="btn-logout" onclick="logout()">Çıkış</button>
+        </div>
+    </header>
+
+    <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('AGS')"><i class="fas fa-book-open"></i> AGS</button>
+        <button class="tab-btn" onclick="switchTab('OABT')"><i class="fas fa-chalkboard-teacher"></i> ÖABT</button>
+        <button class="tab-btn tab-btn-trial" onclick="switchTab('TRIALS')"><i class="fas fa-pen-alt"></i> Deneme</button>
+        <button class="tab-btn" onclick="switchTab('ARCHIVE_AGS')"><i class="fas fa-archive"></i> AGS ARŞİV</button>
+        <button class="tab-btn" onclick="switchTab('ARCHIVE_OABT')"><i class="fas fa-box"></i> ÖABT ARŞİV</button>
+        <button class="tab-btn tab-btn-alert" onclick="switchTab('ANALYSIS')"><i class="fas fa-exclamation-triangle"></i> Analiz</button>
+        <button class="tab-btn" id="tab-btn-admin" onclick="switchTab('ADMIN')"><i class="fas fa-users-cog"></i> YÖNETİM PANELİ</button>
+    </div>
+
+    <div id="tab-AGS" class="tab-content active"><div class="table-scroll"><table id="table-AGS" class="prog-table"></table></div><button class="fab-save" onclick="archiveWeek('AGS')">AGS HAFTAYI BİTİR</button></div>
+    <div id="tab-OABT" class="tab-content"><div class="table-scroll"><table id="table-OABT" class="prog-table"></table></div><button class="fab-save" onclick="archiveWeek('OABT')">ÖABT HAFTAYI BİTİR</button></div>
+    
+    <div id="tab-TRIALS" class="tab-content">
+        <div class="trial-save-header"><button class="btn-save-manual" onclick="manualSave()">KAYDET</button></div>
+        <div class="trials-container">
+            <h3 style="color:#2c3e50; border-bottom:2px solid #ddd; padding-bottom:5px; margin-bottom:15px;">GENEL DENEMELER</h3>
+            <div class="general-row">
+                <div class="trial-card">
+                    <h4 style="color:#3498db; margin-top:0;">AGS Genel Deneme</h4>
+                    <table class="fixed-trial-table" id="trial-table-genel-ags"><thead><tr><th style="width:15%">No</th><th>Doğru</th><th>Yanlış</th><th>Net</th><th style="width:15%">Sil</th></tr></thead><tbody></tbody></table>
+                    <button class="add-row-btn" onclick="addTrialRow('genel-ags')">+ Ekle</button>
+                </div>
+                <div class="trial-card">
+                    <h4 style="color:#d35400; margin-top:0;">ÖABT Genel Deneme</h4>
+                    <table class="fixed-trial-table" id="trial-table-genel-oabt"><thead><tr><th style="width:15%">No</th><th>Doğru</th><th>Yanlış</th><th>Net</th><th style="width:15%">Sil</th></tr></thead><tbody></tbody></table>
+                    <button class="add-row-btn" onclick="addTrialRow('genel-oabt')">+ Ekle</button>
+                </div>
+            </div>
+            <h3 style="color:#2c3e50; border-bottom:2px solid #27ae60; padding-bottom:5px; margin-bottom:15px; margin-top:30px;">AGS BRANŞ DENEMELERİ</h3>
+            <div id="ags-branch-container" class="branch-grid"></div>
+            <h3 style="color:#2c3e50; border-bottom:2px solid #d35400; padding-bottom:5px; margin-bottom:15px; margin-top:30px;">ÖABT BRANŞ DENEMELERİ</h3>
+            <div id="oabt-branch-container" class="branch-grid"></div>
+            <div class="chart-wrapper"><canvas id="trialChart"></canvas></div>
+        </div>
+    </div>
+
+    <div id="tab-ARCHIVE_AGS" class="tab-content"><div class="archive-container" id="archive-list-AGS"></div></div>
+    <div id="tab-ARCHIVE_OABT" class="tab-content"><div class="archive-container" id="archive-list-OABT"></div></div>
+
+    <div id="tab-ANALYSIS" class="tab-content"><div class="analysis-wrapper"><h2 style="color:#2c3e50; border-bottom:2px solid #ddd; padding-bottom:10px;">Eksik Konu Analizi (< %70)</h2><div id="analysis-container" style="margin-top:20px;"></div></div></div>
+
+    <div id="tab-ADMIN" class="tab-content">
+        <div style="padding:20px; background:#f4f6f7; height:100%; overflow-y:auto;">
+            <div id="admin-user-list">
+                <h2>Öğrenci Listesi</h2>
+                <table class="user-table"><thead><tr><th>Kullanıcı</th><th>Şifre</th><th>Tarih</th><th>İşlem</th></tr></thead><tbody id="user-list-body"></tbody></table>
+            </div>
+            <div id="admin-user-detail" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2 id="inspect-username" style="margin:0">Detay</h2>
+                    <button onclick="closeInspect()" style="padding:5px 15px;">Geri</button>
+                </div>
+                
+                <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                    <div style="flex:1; background:#fff; padding:15px; border-radius:8px;">
+                        <h3>İstatistikler & Grafikler</h3>
+                        <div id="inspect-stats" style="margin-bottom:10px; font-size:12px;"></div>
+                        <div class="admin-charts-area">
+                            <div class="admin-chart-box"><canvas id="adminChartAGS"></canvas></div>
+                            <div class="admin-chart-box"><canvas id="adminChartOABT"></canvas></div>
+                        </div>
+                    </div>
+                    <div style="flex:1; background:#fff; padding:15px; border-radius:8px;">
+                        <h3>Ödev Ata</h3>
+                        <div style="display:flex; gap:5px;">
+                            <input type="text" id="admin-assign-text" style="flex-grow:1; padding:5px; border:1px solid #ddd; border-radius:4px;" placeholder="Görev...">
+                            <button onclick="assignTask()" style="padding:5px 10px; background:#27ae60; color:white; border:none;">ATA</button>
+                        </div>
+                        <ul id="inspect-assignments" style="margin-top:10px; list-style:none; padding:0; height:150px; overflow-y:auto;"></ul>
+                        <div style="margin-top:10px;"><b>Zayıf Konular:</b> <div id="inspect-warnings" style="color:#c0392b; font-size:11px;"></div></div>
+                    </div>
+                </div>
+                <button class="btn-style btn-action" onclick="viewUserData()"><i class="fas fa-table"></i> ÖĞRENCİ VERİ TABLOSUNU GÖRÜNTÜLE</button>
+                <div id="user-data-viewer" style="display:none; margin-top:20px;">
+                    <div id="data-table-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="assignment-modal">
+    <div class="modal-content" style="position:relative;">
+        <span onclick="document.getElementById('assignment-modal').style.display='none'" style="position:absolute; right:15px; top:10px; cursor:pointer; font-size:20px;">&times;</span>
+        <h3>Görevlerim</h3>
+        <div id="my-assignments-list"></div>
+        <p id="no-assignments" style="display:none; color:#777;">Ödev yok.</p>
+    </div>
+</div>
+
+<script>
+    const ADMIN_PASS = "1346798520";
+    let currentUser = null;
+    let usersDB = JSON.parse(localStorage.getItem("erol_db_v28")) || [];
+    let currentInspectIndex = -1;
+    let trialChartInstance = null;
+    let adminChartAGS = null, adminChartOABT = null;
+    let currentWarnings = [];
+
+    const agsGreen = "#27ae60";
+    const agsCurriculum = [
+        { name: "SÖZEL YETENEK", color: agsGreen, topics: ["Sözcükte Anlam", "Cümlede Anlam", "Anlatımın Oluşması", "Paragrafta Anlam", "Sözel Mantık"] },
+        { name: "SAYISAL YETENEK", color: agsGreen, topics: ["Temel Kavramlar", "Sayı Basamakları", "Bölme-Bölünebilme", "Asal Çarpanlara Ayırma" , "Ebob-Ekok", "Rasyonel Sayılar", "Basit Eşitsizlikler", "Mutlak Değer", "Üslü Sayılar", "Köklü Sayılar" , "Çarpanlara Ayırma" , "Denklem Çözme" , "Kümeler" , "Fonksiyonlar" , "Oran-Orantı" , "Problemler", "Sayısal Mantık" , "Permütasyon-Kombinasyon-Olasılık"] },
+        { name: "TARİH", color: agsGreen, topics: ["İslamiyet Öncesi Türk Siyasi Tarihi", "İslamiyet Öncesi Türk Kültür ve Medeniyeti", "Türk-İslam Devletleri Siyasi Tarihi", "Türk-İslam Devletleri Kültür ve Medeniyeti", "Türkiye Selçuklu Devleti ve Kültür ve Medeniyeti", "Osmanlı Devleti Kültür ve Medeniyeti", "XIII. ve XV. Yüzyılda Osmanlı Devleti (Kuruluş Dönemi)", "XV. ve XVI. Yüzyılda Osmanlı Devleti (Yükselme Dönemi)", "XVII. Yüzyılda Osmanlı Devleti (Duraklama Dönemi)", "XVIII. Yüzyılda Osmanlı Devleti (Gerileme Dönemi)", "XIX. Yüzyılda Osmanlı Devleti (Dağılma Dönemi)", "XX. Yüzyıl Başlarında Osmanlı Devleti", "Mondros Ateşkes Antlaşması ve Cemiyetler", "Millî Mücadele Hazırlık Dönemi", "I. TBMM Dönemi ve Sevr Barış Antlaşması", "Millî Mücadele Muharebeler Dönemi", "Atatürk’ün Hayatı ve İç Politik Gelişmeler", "Atatürk İlkeleri", "Atatürk İnkılapları", "Atatürk Dönemi Türk Dış Politikası", "XX. Yüzyıl Başlarında Dünya", "II. Dünya Savaşı", "Soğuk Savaş Dönemi", "Yumuşama Dönemi", "Küreselleşen Dünya"] },
+        { name: "COĞRAFYA", color: agsGreen, topics: ["Dünyanın Şekli, Hareketleri ve TR Coğrafi Konumu", "Yer Şekilleri", "İklim ve Bitki Örtüsü", "Nüfus ve Yerleşme", "Tarım, Hayvancılık ve Ormancılık", "Madenler, Enerji Kaynakları ve Sanayi", "Ulaşım, Ticaret ve Turizm", "Bölgeler"] },
+        { name: "EĞİTİMİN TEMELLERİ", color: agsGreen, topics: ["Eğitimde Temel Kavramlar ve Kuramlar", "Eğitimin Temelleri", "Türk Milli Eğt. Sis. Genel Yapısı", "Maarif Modeli", "Etik", "Eğitim Teknolojileri"] },
+        { name: "MEVZUAT", color: agsGreen, topics: ["Türkiye Cumhuriyeti Anayasası 1982", "1739 sayılı Millî Eğitim Temel Kanunu", "222 sayılı İlköğretim ve Eğitim Kanunu", "7528 sayılı Öğretmenlik Mesleği Kanunu"] }
+    ];
+    const oabtCurriculum = [ { name: "ÖABT ALAN DERSLERİ", color: "#d35400", topics: ["Hayat Bilgisi Öğretimi", "Sosyal Bilgiler Öğretimi", "Din Kültürü ve Ahlak Bilgisi Öğretimi", "Fen Bilgisi Öğretimi", "Drama", "Görsel Sanatlar", "Matematik Öğretimi", "İlk Okuma ve Yazma Öğretimi", "Türkçe Öğretimi"] } ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+        renderMainTable("AGS", agsCurriculum);
+        renderMainTable("OABT", oabtCurriculum);
+        renderTrialInterface();
+        document.getElementById("login-pass").addEventListener("keypress", function(e) { if (e.key === "Enter") login(); });
+    });
+
+    function toggleAuth(mode) { document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none'; document.getElementById('register-form').style.display = mode === 'register' ? 'block' : 'none'; }
+    function register() {
+        const u = document.getElementById('reg-user').value.trim(); const p = document.getElementById('reg-pass').value.trim();
+        if(!u || !p) return alert("Eksik bilgi!"); if(usersDB.find(x => x.username === u)) return alert("Kullanıcı adı dolu!");
+        usersDB.push({ username: u, password: p, joinDate: new Date().toLocaleDateString(), isAdmin: false, data: { main: {}, trials: null, archive_AGS: [], archive_OABT: [] }, assignments: [], warnings: [] });
+        saveDB(); alert("Kayıt Başarılı. Giriş yapın."); toggleAuth('login');
+    }
+    function login() {
+        const u = document.getElementById('login-user').value.trim(); const p = document.getElementById('login-pass').value.trim();
+        if(p === ADMIN_PASS) {
+            let admin = usersDB.find(x => x.isAdmin);
+            if(!admin) { admin = { username: "ADMIN", password: p, joinDate: "-", isAdmin: true, data: { main: {}, trials: null, archive_AGS: [], archive_OABT: [] }, assignments: [], warnings: [] }; usersDB.push(admin); saveDB(); }
+            currentUser = admin; initApp(true);
+        } else {
+            const user = usersDB.find(x => x.username === u && x.password === p && !x.isAdmin);
+            if(user) { currentUser = user; initApp(false); } else alert("Hatalı giriş!");
+        }
+    }
+    function initApp(isAdmin) {
+        document.getElementById('auth-screen').style.display = 'none'; document.getElementById('main-app').style.display = 'flex';
+        document.getElementById('display-username').innerText = currentUser.username;
+        document.getElementById('tab-btn-admin').style.display = isAdmin ? 'flex' : 'none';
+        if(isAdmin) loadUserList(); loadUserData(); checkAssignments();
+    }
+    function logout() { location.reload(); }
+    function saveDB() { localStorage.setItem("erol_db_v28", JSON.stringify(usersDB)); }
+    function saveCurrentUser() { const idx = usersDB.findIndex(u => u.username === currentUser.username); if(idx !== -1) { currentUser.warnings = currentWarnings; usersDB[idx] = currentUser; saveDB(); } }
+
+    function loadUserData() {
+        if(currentUser.data.main) { for(let id in currentUser.data.main) { let el = document.getElementById(id); if(el) el.value = currentUser.data.main[id]; } }
+        if(currentUser.data.trials) {
+            let t = currentUser.data.trials;
+            t.genAgs.forEach(x => addRowVal('trial-table-genel-ags', x.d, x.y)); t.genOabt.forEach(x => addRowVal('trial-table-genel-oabt', x.d, x.y));
+            if(t.agsBranch) t.agsBranch.forEach((b,i) => b.forEach(x => addRowVal(`trial-table-ags-branch-${i}`, x.d, x.y)));
+            if(t.oabtBranch) t.oabtBranch.forEach((b,i) => b.forEach(x => addRowVal(`trial-table-oabt-branch-${i}`, x.d, x.y)));
+        }
+        calculateComprehensiveStats(); updateTrialChart(); renderArchive('AGS'); renderArchive('OABT');
+    }
+    function saveAll() {
+        let data = {}; document.querySelectorAll("#tab-AGS input, #tab-AGS textarea, #tab-OABT input, #tab-OABT textarea").forEach(el => { if(el.value) data[el.id] = el.value; });
+        currentUser.data.main = data; saveCurrentUser(); calculateComprehensiveStats();
+    }
+
+    function renderMainTable(type, data) {
+        const table = document.getElementById(`table-${type}`);
+        let html = `<thead><tr><th style="z-index:30;">DERS & KONU</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>BAŞARI</th><th>NOTLAR</th></tr></thead><tbody>`;
+        data.forEach((s, sIdx) => {
+            let style = type==='AGS' ? 'background:#27ae60; color:black;' : 'background:#d35400; color:white;';
+            html += `<tr class="subject-header"><td colspan="10" style="${style}">${s.name}</td></tr>`;
+            s.topics.forEach((t, tIdx) => {
+                let rId = `${type}_s${sIdx}_t${tIdx}`;
+                html += `<tr><td>${t}</td>`;
+                for(let i=1; i<=7; i++) { html += `<td><div class="day-box"><div class="input-row"><span class="lbl lbl-h">H</span><input type="number" class="inp" id="${rId}_d${i}_h" onchange="saveAll()"></div><div class="input-row" id="row_c_${rId}_d${i}"><span class="lbl lbl-c">Ç</span><input type="number" class="inp" id="${rId}_d${i}_c" onchange="saveAll()"></div><div class="input-row"><span class="lbl lbl-d">D</span><input type="number" class="inp" id="${rId}_d${i}_d" onchange="saveAll()"></div></div></td>`; }
+                html += `<td><span class="badge" id="${rId}_perc" style="background:#ddd">-</span></td><td><textarea class="note-area" id="${rId}_note" onchange="saveAll()"></textarea></td></tr>`;
+            });
+        });
+        html += "</tbody>";
+        table.innerHTML = html;
+    }
+
+    function renderTrialInterface() {
+        const agsC = document.getElementById("ags-branch-container"); let agsH = ""; 
+        agsCurriculum.forEach((s,i) => { agsH += `<div class="branch-card"><h4><i class="fas fa-book"></i> ${s.name}</h4><table class="fixed-trial-table" id="trial-table-ags-branch-${i}"><thead><tr><th style="width:20%">No</th><th>D</th><th>Y</th><th>N</th><th style="width:20%">X</th></tr></thead><tbody></tbody></table><button class="add-row-btn" onclick="addBranchTrialRow('ags', ${i})">+ Ekle</button></div>`; });
+        agsC.innerHTML = agsH;
+        const oabtC = document.getElementById("oabt-branch-container"); let oabtH = ""; 
+        oabtCurriculum[0].topics.forEach((t,i) => { oabtH += `<div class="branch-card"><h4><i class="fas fa-flask"></i> ${t}</h4><table class="fixed-trial-table" id="trial-table-oabt-branch-${i}"><thead><tr><th style="width:20%">No</th><th>D</th><th>Y</th><th>N</th><th style="width:20%">X</th></tr></thead><tbody></tbody></table><button class="add-row-btn" onclick="addBranchTrialRow('oabt', ${i})">+ Ekle</button></div>`; });
+        oabtC.innerHTML = oabtH;
+    }
+
+    function calculateComprehensiveStats() {
+        currentWarnings = [];
+        let history = {}; 
+        ['AGS', 'OABT'].forEach(type => {
+            let archiveKey = `archive_${type}`;
+            if(currentUser.data[archiveKey]) { currentUser.data[archiveKey].forEach(entry => { entry.rows.forEach(r => { let k = `${r.subject}|${r.topic}`; if(!history[k]) history[k] = []; history[k].push({s: r.solved, c: r.correct}); }); }); }
+        });
+        ['AGS','OABT'].forEach(type=>{
+            let c=type==='AGS'?agsCurriculum:oabtCurriculum;
+            c.forEach((s,si)=>{
+                s.topics.forEach((t,ti)=>{
+                    let rid=`${type}_s${si}_t${ti}`; let so=0, co=0;
+                    for(let i=1;i<=7;i++){
+                        let h=Number(document.getElementById(`${rid}_d${i}_h`).value)||0; let sol=Number(document.getElementById(`${rid}_d${i}_c`).value)||0; let cor=Number(document.getElementById(`${rid}_d${i}_d`).value)||0;
+                        so+=sol; co+=cor;
+                        let cRow = document.getElementById(`row_c_${rid}_d${i}`);
+                        if(h>0 && sol===0) cRow.classList.add("alert-blink"); else cRow.classList.remove("alert-blink");
+                    }
+                    let el=document.getElementById(`${rid}_perc`);
+                    if(so>0){ 
+                        let p=Math.round((co/so)*100); el.innerText=`%${p}`; el.style.background=p>=80?"#27ae60":(p>=70?"#f1c40f":"#e74c3c"); el.style.color="white"; 
+                        let k = `${s.name}|${t}`; if(!history[k]) history[k] = []; history[k].unshift({s: so, c: co}); 
+                    } else { el.innerText="-"; el.style.background="#dfe6e9"; el.style.color="#999"; }
+                });
+            });
+        });
+        for(let key in history) {
+            let entries = history[key]; let isMastered = false;
+            if(entries.length >= 2) { let p1 = entries[0].s > 0 ? (entries[0].c / entries[0].s) : 0; let p2 = entries[1].s > 0 ? (entries[1].c / entries[1].s) : 0; if(p1 >= 0.8 && p2 >= 0.8) isMastered = true; }
+            if(!isMastered) { let totS = 0, totC = 0; entries.forEach(e => { totS += e.s; totC += e.c; }); if(totS > 0) { let avg = (totC / totS) * 100; if(avg < 70) { let parts = key.split('|'); currentWarnings.push({ subject: parts[0], topic: parts[1], percent: Math.round(avg) }); } } }
+        }
+        renderWarnings(); saveCurrentUser();
+    }
+
+    function renderWarnings() {
+        const container = document.getElementById('analysis-container'); container.innerHTML = "";
+        if(currentWarnings.length === 0) { container.innerHTML = `<div class="no-warning-box">Mükemmel! Kritik eksiğiniz yok.</div>`; return; }
+        currentWarnings.forEach(w => { container.innerHTML += `<div class="warning-card"><i class="fas fa-exclamation-circle warning-icon"></i><div class="warning-content"><h4>${w.subject} - ${w.topic}</h4><p>Başarı: <span class="success-rate-low">%${w.percent}</span> (Tekrar Gerekli)</p></div></div>`; });
+    }
+
+    function checkAssignments() {
+        if(!currentUser.assignments) return;
+        let p = currentUser.assignments.filter(t => !t.completed).length;
+        document.getElementById('notif-count').innerText = p; document.getElementById('notif-count').style.display = p>0?'flex':'none';
+    }
+    function showAssignments() {
+        document.getElementById('assignment-modal').style.display = 'flex';
+        let list = document.getElementById('my-assignments-list'); list.innerHTML="";
+        if(!currentUser.assignments || currentUser.assignments.length===0) { document.getElementById('no-assignments').style.display='block'; return; }
+        document.getElementById('no-assignments').style.display='none';
+        currentUser.assignments.forEach(t => {
+            let cls = t.completed ? 'task-completed' : ''; let chk = t.completed ? 'checked' : '';
+            list.innerHTML += `<div class="task-item ${cls}"><input type="checkbox" class="task-checkbox" onclick="toggleTask(${t.id})" ${chk}><div class="task-text">${t.text}</div><div class="task-date">${t.date}</div></div>`;
+        });
+    }
+    function toggleTask(id) { let t = currentUser.assignments.find(x => x.id === id); if(t) { t.completed = !t.completed; saveCurrentUser(); checkAssignments(); showAssignments(); } }
+
+    function loadUserList() {
+        let h = ""; usersDB.forEach((u,i) => { if(u.isAdmin) return; h += `<tr><td>${u.username}</td><td>${u.password}</td><td>${u.joinDate}</td><td><button class="btn-style btn-inspect" onclick="inspectUser(${i})"><i class="fas fa-eye"></i> İncele</button><button onclick="deleteUser(${i})" class="btn-style btn-delete"><i class="fas fa-trash"></i> Sil</button></td></tr>`; });
+        document.getElementById('user-list-body').innerHTML = h;
+    }
+    function inspectUser(i) {
+        currentInspectIndex = i; let u = usersDB[i];
+        document.getElementById('admin-user-list').style.display='none'; document.getElementById('admin-user-detail').style.display='block';
+        document.getElementById('inspect-username').innerText = u.username;
+        renderAdminTasks(u); renderAdminCharts(u);
+        document.getElementById('user-data-viewer').style.display='none';
+        
+        let warnHtml = "Eksik yok.";
+        if(u.warnings && u.warnings.length > 0) { warnHtml = "<ul style='padding-left:20px; color:#c0392b'>"; u.warnings.forEach(w => warnHtml += `<li>${w.subject} > ${w.topic} (%${w.percent})</li>`); warnHtml += "</ul>"; }
+        document.getElementById('inspect-warnings').innerHTML = warnHtml;
+        
+        let tot=0, arc=0; 
+        if(u.data.main) for(let k in u.data.main) if(k.endsWith('_c')) tot+=Number(u.data.main[k])||0;
+        if(u.data.archive_AGS) u.data.archive_AGS.forEach(a=>arc+=a.total); if(u.data.archive_OABT) u.data.archive_OABT.forEach(a=>arc+=a.total);
+        document.getElementById('inspect-stats').innerHTML = `<p>Aktif Çözüm: ${tot}</p><p>Arşiv: ${arc}</p>`;
+    }
+    
+    function renderAdminCharts(user) {
+        let agsData=[], oabtData=[], labels=[];
+        if(user.data.trials && user.data.trials.genAgs) {
+            user.data.trials.genAgs.forEach((t,i) => {
+                let n = (Number(t.d)||0) - ((Number(t.y)||0)/4);
+                agsData.push(n); labels.push(`D${i+1}`);
+            });
+        }
+        if(user.data.trials && user.data.trials.genOabt) {
+            user.data.trials.genOabt.forEach(t => {
+                let n = (Number(t.d)||0) - ((Number(t.y)||0)/4);
+                oabtData.push(n);
+            });
+        }
+        
+        if(adminChartAGS) adminChartAGS.destroy();
+        adminChartAGS = new Chart(document.getElementById('adminChartAGS'), {
+            type: 'line', data: { labels: labels, datasets: [{ label: 'AGS Net', data: agsData, borderColor: '#3498db', fill: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'AGS Gelişimi' } } }
+        });
+        
+        if(adminChartOABT) adminChartOABT.destroy();
+        adminChartOABT = new Chart(document.getElementById('adminChartOABT'), {
+            type: 'line', data: { labels: labels, datasets: [{ label: 'ÖABT Net', data: oabtData, borderColor: '#d35400', fill: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'ÖABT Gelişimi' } } }
+        });
+    }
+
+    function viewUserData() {
+        let u = usersDB[currentInspectIndex];
+        let html = "<table class='admin-view-table'><thead><tr><th>Ders</th><th>Konu</th><th>Gün</th><th>Hedef</th><th>Çöz</th><th>D</th></tr></thead><tbody>";
+        let hasData = false;
+        for(let key in u.data.main) {
+            if(key.endsWith('_c')) {
+                let val = u.data.main[key];
+                if(val > 0) {
+                    hasData = true;
+                    let parts = key.split('_'); 
+                    let type = parts[0]; let sIdx = parseInt(parts[1].replace('s','')); let tIdx = parseInt(parts[2].replace('t','')); let dIdx = parseInt(parts[3].replace('d',''));
+                    let curr = type === 'AGS' ? agsCurriculum : oabtCurriculum;
+                    let hKey = key.replace('_c', '_h'); let dKey = key.replace('_c', '_d');
+                    let hVal = u.data.main[hKey] || '-'; let dVal = u.data.main[dKey] || '-';
+                    html += `<tr><td>${curr[sIdx].name}</td><td>${curr[sIdx].topics[tIdx]}</td><td>${dIdx}</td><td>${hVal}</td><td>${val}</td><td>${dVal}</td></tr>`;
+                }
+            }
+        }
+        if(!hasData) html += "<tr><td colspan='6'>Veri yok.</td></tr>";
+        html += "</tbody></table>";
+        document.getElementById('data-table-container').innerHTML = html;
+        document.getElementById('user-data-viewer').style.display = 'block';
+    }
+
+    function closeInspect() { document.getElementById('admin-user-list').style.display='block'; document.getElementById('admin-user-detail').style.display='none'; }
+    function deleteUser(i) { if(confirm("Sil?")) { usersDB.splice(i,1); saveDB(); loadUserList(); } }
+    function assignTask() {
+        let txt = document.getElementById('admin-assign-text').value; if(!txt) return;
+        let u = usersDB[currentInspectIndex]; if(!u.assignments) u.assignments = [];
+        u.assignments.push({id:Date.now(), text:txt, date:new Date().toLocaleDateString(), completed:false});
+        saveDB(); renderAdminTasks(u); document.getElementById('admin-assign-text').value="";
+    }
+    function renderAdminTasks(u) {
+        let l = document.getElementById('inspect-assignments'); l.innerHTML=""; if(!u.assignments) return;
+        u.assignments.forEach((t,idx) => { let st = t.completed ? "(OK)" : "(Bekliyor)"; l.innerHTML += `<li>${t.text} <b>${st}</b> <span style="color:red;cursor:pointer" onclick="delTask(${idx})">[x]</span></li>`; });
+    }
+    function delTask(ti) { usersDB[currentInspectIndex].assignments.splice(ti,1); saveDB(); renderAdminTasks(usersDB[currentInspectIndex]); }
+
+    function manualSave() {
+        let tData = { genAgs:[], genOabt:[], agsBranch:[], oabtBranch:[] };
+        ['genel-ags', 'genel-oabt'].forEach(k => document.querySelectorAll(`#trial-table-${k} tbody tr`).forEach(r => tData[k==='genel-ags'?'genAgs':'genOabt'].push({d:r.cells[1].querySelector('input').value, y:r.cells[2].querySelector('input').value})));
+        agsCurriculum.forEach((_,i) => { let sub=[]; document.querySelectorAll(`#trial-table-ags-branch-${i} tbody tr`).forEach(r => sub.push({d:r.cells[1].querySelector('input').value, y:r.cells[2].querySelector('input').value})); tData.agsBranch.push(sub); });
+        oabtCurriculum.forEach((_,i) => { let sub=[]; document.querySelectorAll(`#trial-table-oabt-branch-${i} tbody tr`).forEach(r => sub.push({d:r.cells[1].querySelector('input').value, y:r.cells[2].querySelector('input').value})); tData.oabtBranch.push(sub); });
+        currentUser.data.trials = tData; saveAll(); saveCurrentUser(); alert("Kaydedildi.");
+    }
+    function addRowVal(tid, d, y) {
+        let table = document.getElementById(tid).querySelector('tbody');
+        let row = table.insertRow();
+        row.innerHTML = `<td>${table.rows.length}</td><td><input type="number" class="trial-inp" value="${d}" onchange="calcTrial(this)"></td><td><input type="number" class="trial-inp" value="${y}" onchange="calcTrial(this)"></td><td style="font-weight:bold; font-size:12px;">${(d-y/4).toFixed(2)}</td><td onclick="delTrial(this)" style="color:red;cursor:pointer; font-weight:bold;">X</td>`;
+    }
+    function addTrialRow(t){let tb=document.getElementById(`trial-table-${t}`).querySelector('tbody'); let r=tb.insertRow(); r.innerHTML=`<td>${tb.rows.length}</td><td><input type="number" class="trial-inp" onchange="calcTrial(this)"></td><td><input type="number" class="trial-inp" onchange="calcTrial(this)"></td><td style="font-weight:bold; font-size:12px;">0.00</td><td onclick="delTrial(this)" style="color:red;cursor:pointer; font-weight:bold;">X</td>`; }
+    function addBranchTrialRow(c,i){let id=c==='ags'?`trial-table-ags-branch-${i}`:`trial-table-oabt-branch-${i}`; let tb=document.getElementById(id).querySelector('tbody'); let r=tb.insertRow(); r.innerHTML=`<td>${tb.rows.length}</td><td><input type="number" class="trial-inp" onchange="calcTrial(this)"></td><td><input type="number" class="trial-inp" onchange="calcTrial(this)"></td><td style="font-weight:bold; font-size:12px;">0.00</td><td onclick="delTrial(this)" style="color:red;cursor:pointer; font-weight:bold;">X</td>`; }
+    function calcTrial(i){let r=i.parentElement.parentElement; let d=Number(r.cells[1].querySelector('input').value)||0; let y=Number(r.cells[2].querySelector('input').value)||0; r.cells[3].innerText=(d-y/4).toFixed(2); updateTrialChart(); }
+    function delTrial(b){b.parentElement.parentElement.remove(); updateTrialChart(); }
+    function updateTrialChart(){ let a=[],o=[],l=[]; let ar=document.querySelectorAll('#trial-table-genel-ags tbody tr'); let or=document.querySelectorAll('#trial-table-genel-oabt tbody tr'); for(let i=0;i<Math.max(ar.length,or.length);i++){l.push(`D${i+1}`); if(ar[i]) a.push(parseFloat(ar[i].cells[3].innerText)); if(or[i]) o.push(parseFloat(or[i].cells[3].innerText));} if(trialChartInstance) trialChartInstance.destroy(); trialChartInstance=new Chart(document.getElementById('trialChart'),{type:'line',data:{labels:l,datasets:[{label:'AGS',data:a,borderColor:'#3498db'},{label:'ÖABT',data:o,borderColor:'#e67e22'}]},options:{responsive:true,maintainAspectRatio:false}});}
+
+    function archiveWeek(type) {
+        if(!confirm("Arşivle?")) return;
+        let rows = []; let total = 0; let curriculum = type==='AGS'?agsCurriculum:oabtCurriculum;
+        curriculum.forEach((s,si) => {
+            s.topics.forEach((t,ti) => {
+                let rid = `${type}_s${si}_t${ti}`; let sol=0, cor=0;
+                for(let i=1; i<=7; i++) { sol += Number(document.getElementById(`${rid}_d${i}_c`).value)||0; cor += Number(document.getElementById(`${rid}_d${i}_d`).value)||0; }
+                let note = document.getElementById(`${rid}_note`).value;
+                if(sol>0 || note) { rows.push({subject:s.name, topic:t, solved:sol, correct:cor, note:note}); total+=sol; }
+            });
+        });
+        if(rows.length===0) return alert("Veri yok!");
+        currentUser.data[`archive_${type}`].unshift({ id:Date.now(), date:new Date().toLocaleDateString(), total:total, rows:rows });
+        document.querySelectorAll(`#tab-${type} input`).forEach(el => el.value=""); document.querySelectorAll(`#tab-${type} textarea`).forEach(el => el.value="");
+        saveAll(); renderArchive(type); switchTab(`ARCHIVE_${type}`); alert("Arşivlendi!");
+    }
+    function renderArchive(type) {
+        let list = document.getElementById(`archive-list-${type}`); let data = currentUser.data[`archive_${type}`];
+        if(!data || data.length===0) { list.innerHTML="<p style='text-align:center;color:#999'>Boş</p>"; return; }
+        let h=""; data.forEach(item => { h+=`<div class="archive-card"><div class="archive-header"><div class="archive-info" onclick="toggleDetail(${item.id})"><span>📅 ${item.date}</span><span>${item.total} Soru</span></div><button class="btn-delete-single" onclick="delArch('${type}', ${item.id})"><i class="fas fa-trash-alt"></i></button></div><div class="archive-content" style="display:none" id="detail-${item.id}"><table class="archive-table"><thead><tr><th class="col-subject">D</th><th class="col-topic">K</th><th class="col-num">Ç</th><th class="col-num">D</th><th class="col-num">%</th><th class="col-note">N</th></tr></thead><tbody>`; item.rows.forEach(r => { let p = r.solved>0?Math.round((r.correct/r.solved)*100):0; let c = p>=80?'#27ae60':(p>=50?'#f1c40f':'#e74c3c'); h+=`<tr><td>${r.subject}</td><td>${r.topic}</td><td style="text-align:center">${r.solved}</td><td style="text-align:center">${r.correct}</td><td style="text-align:center;color:${c}">%${p}</td><td>${r.note}</td></tr>`; }); h+="</tbody></table></div></div>"; }); list.innerHTML = h;
+    }
+    function delArch(type, id) { if(confirm("Sil?")) { currentUser.data[`archive_${type}`] = currentUser.data[`archive_${type}`].filter(x=>x.id!==id); saveCurrentUser(); renderArchive(type); } }
+    function toggleDetail(id){let el=document.getElementById(`detail-${id}`);el.style.display=el.style.display==='block'?'none':'block';}
+
+    function switchTab(t) {
+        document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+        document.getElementById(`tab-${t}`).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        updateStats();
+    }
+</script>
+</body>
+</html>
+<script type="module">
+/* =======================
+   FIREBASE ENTEGRASYONU
+   ======================= */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } 
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+/* === SENİN AYARLARIN === */
+const firebaseConfig = {
+  apiKey: "AIzaSyCcCGfX2jJgKMmRlMWbYgq2pOvTK_YuTC4",
+  authDomain: "eroltilkiapp.firebaseapp.com",
+  projectId: "eroltilkiapp",
+  storageBucket: "eroltilkiapp.firebasestorage.app",
+  messagingSenderId: "866174751616",
+  appId: "1:866174751616:web:eed94e7b98841bc1a52765"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* =======================
+   OVERRIDE EDİLEN FONKSİYONLAR
+   ======================= */
+
+/* KAYIT */
+const email = document.getElementById('reg-user').value.trim();
+createUserWithEmailAndPassword(auth, email, p)
+
+/* GİRİŞ */
+const email = document.getElementById('login-user').value.trim();
+signInWithEmailAndPassword(auth, email, p)
+
+
+/* KAYDET */
+window.saveCurrentUser = async function () {
+    if (!currentUser || !currentUser.__uid) return;
+    await setDoc(doc(db, "users", currentUser.__uid), currentUser);
+};
+
+/* LOCALSTORAGE DEVRE DIŞI */
+window.saveDB = function(){};
+</script>
